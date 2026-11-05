@@ -1,139 +1,100 @@
-# 📚 BookNook Server API
+# 📚 BookNook Server API (Backend)
 
-**BookNook Server** is a fast, lightweight, and secure RESTful backend API built to power the **BookNook** library management system. It provides an efficient interface for managing book collections, handling inventory stock levels, processing borrowing and return workflows, and securing user transactions using token-based authorization.
+The official RESTful backend API for **BookNook**, a digital library management system. Built with Express.js and native MongoDB, it provides robust and secure interfaces for catalog management, inventory tracking, borrowing workflows, and JWT authentication.
 
-The server is architected to work seamlessly both as a traditional Node.js/Express server and as a serverless backend ready for deployment on platforms like **Vercel**.
+- 🔌 **Live Backend API**: [https://b14-a8-cat-ron-backend.vercel.app](https://b14-a8-cat-ron-backend.vercel.app)
+- 🌐 **Frontend App**: [https://b14-a8-cat-ron-frontend.vercel.app](https://b14-a8-cat-ron-frontend.vercel.app)
+- 📂 **Frontend Repo**: [https://github.com/mahmudulhasanmaruf78/B14-A8-Cat_Ron-frontend](https://github.com/mahmudulhasanmaruf78/B14-A8-Cat_Ron-frontend)
 
 ---
 
 ## ✨ Features
 
-- **📖 Book Management (Full CRUD)**:
-  - Add new books to the library collection.
-  - View all books with real-time text search (title/author), category filtering, and sorting options.
-  - Retrieve detailed information for individual books.
-  - Update and delete existing book records.
+- **📖 Book Catalog (CRUD)**:
+  - `GET /books`: Fetch books with search query (`title`/`author`), category filtering (`Fiction`, `Science`, `History`, `Kids`, `Others`), sorting (`newest`, `oldest`, `copies-desc`, `copies-asc`), and user-specific email filtering.
+  - `GET /books/:id`: Retrieve detailed book record by MongoDB ObjectId.
+  - `POST /books`: Protected route to add new books with validation.
+  - `PATCH /books/:id`: Protected route to update book details.
+  - `DELETE /books/:id`: Protected route to remove a book.
 
 - **🔄 Borrow & Return System**:
-  - **Atomic Stock Management**: Automatically decrements available copies on borrow and increments them back on return using MongoDB `$inc`.
-  - **Duplicate Borrow Prevention**: Prevents the same user from borrowing the same book multiple times concurrently.
-  - **Borrow History**: Users can view their active borrowed books and process returns.
+  - `POST /borrows`: Borrow a book with atomic stock management (decrements `totalCopies` by 1 using MongoDB `$inc`).
+  - **Duplicate Borrow Prevention**: Rejects duplicate active borrow requests for the same book by the same user.
+  - `GET /borrows`: Fetch the active borrowed books of the authenticated user.
+  - `DELETE /borrows/:id`: Process book returns, atomically restoring available copies (`$inc: { totalCopies: 1 }`).
 
-- **🔐 Authentication & Protected Routes**:
-  - Issues JSON Web Tokens (JWT) for authenticated users via `/jwt`.
-  - Middleware-based authorization (`verifyToken`) safeguarding sensitive write/update/delete and borrow operations.
+- **🔐 Token-Based Authorization**:
+  - `POST /jwt`: Issues signed JSON Web Tokens for authenticated users.
+  - `verifyToken` middleware validates Bearer tokens on all sensitive routes.
 
-- **🌐 Cross-Origin Resource Sharing (CORS)**:
-  - Configured to allow secure requests from local development environments (`localhost:3000`) and production client domains (including `.vercel.app`).
-
-- **⚡ Serverless & Cloud Ready**:
-  - Includes connection pooling and cold-start optimization for serverless deployment on Vercel (`vercel.json` included).
+- **⚡ Serverless Optimized**:
+  - Clean CommonJS architecture optimized for Vercel serverless execution with connection reuse and fast responses.
 
 ---
 
-## 🛠️ Technologies Used
+## 🛠️ Technology Stack
 
-| Category | Technology | Description |
-|---|---|---|
-| **Runtime** | [Node.js](https://nodejs.org/) | JavaScript runtime environment |
-| **Framework** | [Express.js](https://expressjs.com/) | Minimalist web application framework for API routing |
-| **Database** | [MongoDB](https://www.mongodb.com/) | NoSQL database with official native driver (`mongodb` v6) |
-| **Authentication** | [jsonwebtoken (JWT)](https://jwt.io/) | Secure token creation and verification |
-| **Security & CORS** | [cors](https://www.npmjs.com/package/cors) | Enabling Cross-Origin Resource Sharing |
-| **Environment** | [dotenv](https://www.npmjs.com/package/dotenv) | Loads environment variables from `.env` |
-| **Dev Tools** | [nodemon](https://nodemon.io/) | Auto-restarts the server during local development |
-| **Deployment** | [Vercel](https://vercel.com/) | Optimized for serverless API hosting |
+| Layer | Technology |
+|---|---|
+| **Runtime** | [Node.js](https://nodejs.org/) (v18+) |
+| **Framework** | [Express.js](https://expressjs.com/) |
+| **Database** | [MongoDB](https://www.mongodb.com/) (Native MongoDB Node.js Driver) |
+| **Security & Auth** | [jsonwebtoken (JWT)](https://jwt.io/) & [cors](https://www.npmjs.com/package/cors) |
+| **Environment** | [dotenv](https://www.npmjs.com/package/dotenv) |
+| **Deployment** | [Vercel](https://vercel.com/) (`vercel.json`) |
 
 ---
 
-## 📡 API Endpoints Overview
+## 📡 API Endpoints
 
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `GET` | `/` | Public | Health check & API overview |
-| `POST` | `/jwt` | Public | Generate JWT authorization token |
-| `GET` | `/books` | Public | Fetch all books (supports query params: `search`, `category`, `sort`, `email`) |
-| `GET` | `/books/:id` | Public | Fetch details of a single book by ID |
-| `POST` | `/books` | Protected | Add a new book to the library |
-| `PATCH` | `/books/:id` | Protected | Update an existing book's details |
-| `DELETE` | `/books/:id` | Protected | Remove a book from the catalog |
-| `POST` | `/borrows` | Protected | Borrow a book (decrements available copies) |
-| `GET` | `/borrows` | Protected | Get all books borrowed by the current user |
-| `DELETE` | `/borrows/:id` | Protected | Return a borrowed book (restores available copies) |
+| `GET` | `/` | Public | Server health check and endpoints list |
+| `POST` | `/jwt` | Public | Generate authorization JWT token |
+| `GET` | `/books` | Public | Get all books (query: `search`, `category`, `sort`, `limit`, `email`) |
+| `GET` | `/books/:id` | Public | Get single book by ID |
+| `POST` | `/books` | **Protected** | Create a new book |
+| `PATCH` | `/books/:id` | **Protected** | Update an existing book |
+| `DELETE` | `/books/:id` | **Protected** | Delete a book |
+| `POST` | `/borrows` | **Protected** | Borrow a book (decrements copies) |
+| `GET` | `/borrows` | **Protected** | Get user's active borrowed books |
+| `DELETE` | `/borrows/:id` | **Protected** | Return a borrowed book (restores copies) |
 
 ---
 
-## 🚀 How to Run Locally
+## ⚙️ Environment Variables
 
-Follow these steps to set up and run the server on your local machine:
+Create a `.env` file in the `server/` directory:
+
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_atlas_connection_string
+DB_NAME=booknook
+CLIENT_URL=https://b14-a8-cat-ron-frontend.vercel.app
+JWT_SECRET=your_jwt_secret_key
+```
+
+---
+
+## 🚀 Running Locally
 
 ### 1. Prerequisites
-Ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (version 18 or newer recommended)
-- [Git](https://git-scm.com/)
-- A [MongoDB Atlas](https://www.mongodb.com/atlas) account (or a local MongoDB instance running)
+- Node.js 18 or newer
+- MongoDB Atlas cluster or local MongoDB instance
 
----
-
-### 2. Clone the Repository
+### 2. Installation
 ```bash
-git clone https://github.com/DeeDee001/booknook-server.git
-cd booknook-server
-```
-*(Or navigate to your local `server-side` directory if you already have the files).*
-
----
-
-### 3. Install Dependencies
-```bash
+cd server
 npm install
 ```
 
----
-
-### 4. Configure Environment Variables
-Create a `.env` file in the root directory:
-```env
-PORT=5000
-MONGODB_URI=your_mongodb_connection_string
-CLIENT_URL=http://localhost:3000
+### 3. Start Development Server
+```bash
+npm run dev
 ```
+The server will start on [http://localhost:5000](http://localhost:5000).
 
-> **Note:**
-> - Replace `your_mongodb_connection_string` with your MongoDB connection URI (e.g., from MongoDB Atlas).
-> - Make sure your MongoDB Atlas **Network Access** allows your IP address (or `0.0.0.0/0` for universal access).
-> - If `JWT_SECRET` is not set in `.env`, the server automatically falls back to a default development secret key.
-
----
-
-### 5. Start the Server
-
-- **Development Mode** (with automatic restarts on code changes):
-  ```bash
-  npm run dev
-  ```
-
-- **Production / Standard Mode**:
-  ```bash
-  npm start
-  ```
-
----
-
-### 6. Verify Installation
-Once the server starts, you will see a message like:
-```text
-Successfully connected to MongoDB database [booknook]!
-BookNook server is running on port 5000
-```
-Open your browser or API client (Postman/Thunder Client) and visit:
-[http://localhost:5000](http://localhost:5000)
-
-You should receive a `200 OK` JSON response:
-```json
-{
-  "success": true,
-  "message": "Welcome to BookNook Server API",
-  "status": "Online"
-}
+### 4. Start Production Server
+```bash
+npm start
 ```
