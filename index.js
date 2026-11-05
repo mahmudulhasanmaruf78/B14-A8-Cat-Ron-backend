@@ -34,6 +34,8 @@ app.use(express.json());
 
 // MongoDB Connection Setup
 const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/booknook";
+const dbName = process.env.DB_NAME || "booknook";
+
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -43,7 +45,7 @@ const client = new MongoClient(uri, {
 });
 
 let isConnected = false;
-const db = client.db("booknook");
+const db = client.db(dbName);
 
 // Database connection middleware for serverless requests
 app.use(async (req, res, next) => {
