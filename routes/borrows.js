@@ -7,7 +7,7 @@ const createBorrowsRouter = (db) => {
   const borrowsCollection = db.collection("borrows");
   const booksCollection = db.collection("books");
 
-  // 6. POST /borrows — borrow a book (protected)
+  // POST /borrows - Create borrow record
   router.post("/", verifyToken, async (req, res) => {
     try {
       const { bookId, bookTitle, bookImage, userEmail, userName, borrowDate, returnDate } = req.body;
@@ -34,7 +34,7 @@ const createBorrowsRouter = (db) => {
       const borrowerEmail = userEmail || req.user.email;
       const borrowerName = userName || req.user.name || "Reader";
 
-      // 1. Verify book availability
+      // Check book existence and stock
       const book = await booksCollection.findOne({ _id: new ObjectId(bookId) });
       if (!book) {
         return res.status(404).json({ success: false, message: "Book not found" });
@@ -47,7 +47,7 @@ const createBorrowsRouter = (db) => {
         });
       }
 
-      // 2. Challenge: No Double Borrow check
+      // Prevent duplicate concurrent borrow for same user
       const existingBorrow = await borrowsCollection.findOne({
         bookId: bookId.toString(),
         userEmail: borrowerEmail,
@@ -60,13 +60,13 @@ const createBorrowsRouter = (db) => {
         });
       }
 
-      // 3. Challenge: Decrease available copies by 1 with $inc
+      // Decrement available copies
       await booksCollection.updateOne(
         { _id: new ObjectId(bookId) },
         { $inc: { totalCopies: -1 } }
       );
 
-      // 4. Save borrow record
+      // Insert borrow record
       const borrowRecord = {
         bookId: bookId.toString(),
         bookTitle: bookTitle || book.title,
@@ -91,7 +91,7 @@ const createBorrowsRouter = (db) => {
     }
   });
 
-  // 7. GET /borrows — get the borrows of the logged in user (protected)
+  // GET /borrows - Retrieve user borrow history
   router.get("/", verifyToken, async (req, res) => {
     try {
       const email = req.query.email || req.user.email;
@@ -115,7 +115,7 @@ const createBorrowsRouter = (db) => {
     }
   });
 
-  // 8. DELETE /borrows/:id — return a book (protected)
+  // DELETE /borrows/:id - Return a borrowed book
   router.delete("/:id", verifyToken, async (req, res) => {
     try {
       const { id } = req.params;
@@ -128,7 +128,7 @@ const createBorrowsRouter = (db) => {
         return res.status(404).json({ success: false, message: "Borrow record not found or already returned" });
       }
 
-      // Challenge: Increase book copies by 1 with $inc upon return
+      // Restore available copies in catalog
       if (borrowRecord.bookId && ObjectId.isValid(borrowRecord.bookId)) {
         await booksCollection.updateOne(
           { _id: new ObjectId(borrowRecord.bookId) },

@@ -6,7 +6,7 @@ const createBooksRouter = (db) => {
   const router = express.Router();
   const booksCollection = db.collection("books");
 
-  // 1. GET /books — get all books (public)
+  // GET /books - Retrieve all books
   router.get("/", async (req, res) => {
     try {
       const { category, search, limit, sort, email } = req.query;
@@ -56,7 +56,7 @@ const createBooksRouter = (db) => {
     }
   });
 
-  // 2. GET /books/:id — get one book (public)
+  // GET /books/:id - Retrieve a book by ID
   router.get("/:id", async (req, res) => {
     try {
       const { id } = req.params;
@@ -76,7 +76,7 @@ const createBooksRouter = (db) => {
     }
   });
 
-  // 3. POST /books — add a book (protected)
+  // POST /books - Add a new book
   router.post("/", verifyToken, async (req, res) => {
     try {
       const { title, author, category, image, description, userName, userEmail, totalCopies } = req.body;
@@ -125,7 +125,7 @@ const createBooksRouter = (db) => {
     }
   });
 
-  // 4. PATCH /books/:id — update a book (protected)
+  // PATCH /books/:id - Update book details
   router.patch("/:id", verifyToken, async (req, res) => {
     try {
       const { id } = req.params;
@@ -169,7 +169,7 @@ const createBooksRouter = (db) => {
     }
   });
 
-  // 5. DELETE /books/:id — delete a book (protected)
+  // DELETE /books/:id - Delete a book
   router.delete("/:id", verifyToken, async (req, res) => {
     try {
       const { id } = req.params;
